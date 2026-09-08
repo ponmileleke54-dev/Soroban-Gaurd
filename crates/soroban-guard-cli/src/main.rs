@@ -1,5 +1,9 @@
 use clap::{Parser, Subcommand};
-use soroban_guard_core::{LinterEngine, rules::RequireAuthRule, Severity};
+use soroban_guard_core::{
+    LinterEngine,
+    rules::{RequireAuthRule, TtlExtensionRule},
+    Severity,
+};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -27,6 +31,7 @@ fn main() {
 
             let mut engine = LinterEngine::new();
             engine.register_rule(Box::new(RequireAuthRule));
+            engine.register_rule(Box::new(TtlExtensionRule));
 
             match engine.analyze_file(&path) {
                 Ok(diagnostics) => {

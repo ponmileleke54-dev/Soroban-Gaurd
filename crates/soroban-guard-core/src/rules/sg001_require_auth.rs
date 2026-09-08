@@ -1,4 +1,4 @@
-use syn::{visit::Visit, File, ItemFn, Visibility};
+use syn::{visit::Visit, File, ImplItemFn, Visibility};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
 
@@ -29,12 +29,15 @@ struct AuthVisitor {
 }
 
 impl<'ast> Visit<'ast> for AuthVisitor {
-    fn visit_item_fn(&mut self, node: &'ast ItemFn) {
+    fn visit_impl_item_fn(&mut self, node: &'ast ImplItemFn) {
         if matches!(node.vis, Visibility::Public(_)) {
             let fn_str = quote::quote!(#node).to_string();
 
             let has_require_auth = fn_str.contains("require_auth");
-            let mutates_state = fn_str.contains("env . storage") || fn_str.contains("env . storage ( )");
+            let mutates_state = fn_str.contains("storage") 
+                || fn_str.contains("instance") 
+                || fn_str.contains("persistent") 
+                || fn_str.contains("temporary");
 
             if mutates_state && !has_require_auth {
                 self.diagnostics.push(Diagnostic {
@@ -48,6 +51,6 @@ impl<'ast> Visit<'ast> for AuthVisitor {
                 });
             }
         }
-        syn::visit::visit_item_fn(self, node);
+        syn::visit::visit_impl_item_fn(self, node);
     }
 }
