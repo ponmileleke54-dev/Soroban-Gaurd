@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use soroban_guard_core::{
     LinterEngine,
-    rules::{RequireAuthRule, TtlExtensionRule},
+    rules::{RequireAuthRule, TtlExtensionRule, UnboundedLoopRule},
     Severity,
 };
 use std::path::PathBuf;
@@ -32,6 +32,7 @@ fn main() {
             let mut engine = LinterEngine::new();
             engine.register_rule(Box::new(RequireAuthRule));
             engine.register_rule(Box::new(TtlExtensionRule));
+            engine.register_rule(Box::new(UnboundedLoopRule));
 
             match engine.analyze_file(&path) {
                 Ok(diagnostics) => {
