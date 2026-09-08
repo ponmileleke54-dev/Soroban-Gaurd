@@ -1,0 +1,10 @@
+[package]
+name = "soroban-guard-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+soroban-guard-core = { path = "../soroban-guard-core" }
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
