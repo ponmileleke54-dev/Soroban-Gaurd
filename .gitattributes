@@ -1,0 +1,5 @@
+# Tell GitHub Linguist to exclude non-code files from language stats
+tests/fixtures/* linguist-vendored
+docs/* linguist-documentation
+*.md linguist-documentation
+Makefile linguist-documentation
