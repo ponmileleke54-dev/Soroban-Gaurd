@@ -19,6 +19,11 @@ impl VulnerableVault {
         }
     }
 
+    // ⚠️ Triggers SG004 (Bare panic macro call)
+    pub fn emergency_halt(env: Env) {
+        panic!("Emergency halt triggered!");
+    }
+
     // ✅ Safe function: Has require_auth and extend_ttl
     pub fn withdraw(env: Env, user: Symbol, amount: i128) {
         user.require_auth();
