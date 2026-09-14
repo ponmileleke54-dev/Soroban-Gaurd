@@ -1,6 +1,11 @@
-# Exclude fixtures, documentation, and non-Rust scripts from language stats
-tests/fixtures/* linguist-vendored
+# Force Rust files to be counted as core code
+*.rs linguist-language=Rust
+*.rs linguist-detectable=true
+
+# Ignore vendor files, fixtures, docs, and makefiles from total code volume
+tests/* linguist-vendored
 docs/* linguist-documentation
 *.md linguist-documentation
-Makefile linguist-documentation
+Makefile linguist-vendored
+Makefile linguist-generated=true
 Makefile linguist-detectable=false
