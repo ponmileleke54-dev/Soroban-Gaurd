@@ -1,6 +1,6 @@
 use clap::{Parser, ValueEnum};
 use soroban_guard_core::{
-    GuardConfig, LinterEngine, Severity,
+    GuardConfig, LinterEngine, SarifLog, Severity,
     rules::{
         BarePanicRule, HardcodedKeyRule, ReentrancyStateMutationRule, RequireAuthRule,
         TtlExtensionRule, UnboundedLoopRule, UncheckedArithmeticRule, UnusedReturnRule,
@@ -15,6 +15,7 @@ enum OutputFormat {
     Text,
     Json,
     Github,
+    Sarif,
 }
 
 #[derive(Parser)]
@@ -55,6 +56,11 @@ fn main() {
             let output_str = match cli.format {
                 OutputFormat::Json => serde_json::to_string_pretty(&diagnostics)
                     .unwrap_or_else(|_| "[]".to_string()),
+                OutputFormat::Sarif => {
+                    let sarif_log = SarifLog::from_diagnostics(&diagnostics);
+                    serde_json::to_string_pretty(&sarif_log)
+                        .unwrap_or_else(|_| "{}".to_string())
+                }
                 OutputFormat::Github => {
                     let mut buffer = String::new();
                     for diag in &diagnostics {
