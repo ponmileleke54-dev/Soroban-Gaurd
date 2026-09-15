@@ -1,10 +1,10 @@
 use clap::{Parser, ValueEnum};
 use soroban_guard_core::{
-    LinterEngine,
+    GuardConfig, LinterEngine, Severity,
     rules::{
-        RequireAuthRule, TtlExtensionRule, UnboundedLoopRule, BarePanicRule, HardcodedKeyRule, UncheckedArithmeticRule, UnusedReturnRule
+        BarePanicRule, HardcodedKeyRule, RequireAuthRule, TtlExtensionRule,
+        UnboundedLoopRule, UncheckedArithmeticRule, UnusedReturnRule,
     },
-    Severity,
 };
 use std::fs::File;
 use std::io::Write;
@@ -28,12 +28,19 @@ struct Cli {
 
     #[arg(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
+
+    #[arg(short, long, value_name = "CONFIG_PATH")]
+    config: Option<PathBuf>,
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    let mut engine = LinterEngine::new();
+    // Load custom config or search for default .soroban-guard.toml
+    let config_path = cli.config.unwrap_or_else(|| PathBuf::from(".soroban-guard.toml"));
+    let config = GuardConfig::load_from_path(&config_path);
+
+    let mut engine = LinterEngine::with_config(config);
     engine.register_rule(Box::new(RequireAuthRule));
     engine.register_rule(Box::new(TtlExtensionRule));
     engine.register_rule(Box::new(UnboundedLoopRule));
@@ -48,11 +55,11 @@ fn main() {
                 OutputFormat::Json => serde_json::to_string_pretty(&diagnostics)
                     .unwrap_or_else(|_| "[]".to_string()),
                 OutputFormat::Text => {
-                    let mut buffer = String::new();
                     if diagnostics.is_empty() {
                         return println!("\x1b[1;32m✅ Analysis complete: Zero security vulnerabilities detected!\x1b[0m");
                     }
 
+                    let mut buffer = String::new();
                     let mut critical_count = 0;
                     let mut warning_count = 0;
                     let mut info_count = 0;
