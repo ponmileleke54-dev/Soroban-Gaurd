@@ -5,6 +5,7 @@ pub mod sg003_unbounded_loop;
 pub mod sg004_bare_panic;
 pub mod sg005_hardcoded_keys;
 pub mod sg006_unchecked_math;
+pub mod sg007_unused_return;
 
 pub use trait_rule::Rule;
 pub use sg001_require_auth::RequireAuthRule;
@@ -13,3 +14,4 @@ pub use sg003_unbounded_loop::UnboundedLoopRule;
 pub use sg004_bare_panic::BarePanicRule;
 pub use sg005_hardcoded_keys::HardcodedKeyRule;
 pub use sg006_unchecked_math::UncheckedArithmeticRule;
+pub use sg007_unused_return::UnusedReturnRule;
