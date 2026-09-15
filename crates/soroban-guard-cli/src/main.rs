@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 use soroban_guard_core::{
     LinterEngine,
     rules::{
-        RequireAuthRule, TtlExtensionRule, UnboundedLoopRule, BarePanicRule, HardcodedKeyRule, UncheckedArithmeticRule
+        RequireAuthRule, TtlExtensionRule, UnboundedLoopRule, BarePanicRule, HardcodedKeyRule, UncheckedArithmeticRule, UnusedReturnRule
     },
     Severity,
 };
@@ -40,6 +40,7 @@ fn main() {
     engine.register_rule(Box::new(BarePanicRule));
     engine.register_rule(Box::new(HardcodedKeyRule));
     engine.register_rule(Box::new(UncheckedArithmeticRule));
+    engine.register_rule(Box::new(UnusedReturnRule));
 
     match engine.analyze_file(&cli.path) {
         Ok(diagnostics) => {
