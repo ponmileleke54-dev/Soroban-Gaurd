@@ -26,3 +26,11 @@ pub fn deposit(env: Env, user: Address, amount: i128) {
     balance = balance.checked_add(amount).expect("overflow");
     env.storage().instance().set(&user, &balance);
 }
+---
+
+## `SG008`: State Mutation After External Call (Reentrancy Risk)
+
+* **Severity:** Critical
+* **Target:** Public functions modifying contract storage after invoking external contracts.
+* **Description:** Executing state mutations (`set(...)`) after calling external contracts (`invoke_contract`) leaves the contract vulnerable to reentrancy attacks or inconsistent state transitions.
+* **Remediation:** Follow the Checks-Effects-Interactions pattern: update storage states *before* making cross-contract calls.
