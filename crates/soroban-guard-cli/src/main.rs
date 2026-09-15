@@ -14,6 +14,7 @@ use std::path::PathBuf;
 enum OutputFormat {
     Text,
     Json,
+    Github,
 }
 
 #[derive(Parser)]
@@ -36,7 +37,6 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
 
-    // Load custom config or search for default .soroban-guard.toml
     let config_path = cli.config.unwrap_or_else(|| PathBuf::from(".soroban-guard.toml"));
     let config = GuardConfig::load_from_path(&config_path);
 
@@ -55,6 +55,21 @@ fn main() {
             let output_str = match cli.format {
                 OutputFormat::Json => serde_json::to_string_pretty(&diagnostics)
                     .unwrap_or_else(|_| "[]".to_string()),
+                OutputFormat::Github => {
+                    let mut buffer = String::new();
+                    for diag in &diagnostics {
+                        let level = match diag.severity {
+                            Severity::Critical => "error",
+                            Severity::Warning => "warning",
+                            Severity::Info => "notice",
+                        };
+                        buffer.push_str(&format!(
+                            "::{} file={},line={},col={}::[{}] {}\n",
+                            level, diag.file_path, diag.line, diag.column, diag.rule_code, diag.message
+                        ));
+                    }
+                    buffer
+                }
                 OutputFormat::Text => {
                     if diagnostics.is_empty() {
                         return println!("\x1b[1;32m✅ Analysis complete: Zero security vulnerabilities detected!\x1b[0m");
