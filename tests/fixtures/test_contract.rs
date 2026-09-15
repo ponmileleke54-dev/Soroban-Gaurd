@@ -1,4 +1,4 @@
-use soroban_sdk::{contract, contractimpl, Env, Vec, Symbol};
+use soroban_sdk::{contract, contractimpl, Address, Env, Vec, Symbol};
 
 #[contract]
 pub struct VulnerableVault;
@@ -27,6 +27,13 @@ impl VulnerableVault {
     // ⚠️ Triggers SG007 (Unused try_get return value)
     pub fn check_status(env: Env) {
         env.storage().instance().try_get::<Symbol, i128>(&Symbol::short("BAL"));
+    }
+
+    // 🚨 Triggers SG008 (Reentrancy: state mutation after external call)
+    pub fn execute_external_transfer(env: Env, target_contract: Address, amount: i128) {
+        target_contract.require_auth();
+        let _ = env.invoke_contract::<i128>(&target_contract, &Symbol::short("payout"), Vec::new(&env));
+        env.storage().instance().set(&Symbol::short("BAL"), &0i128);
     }
 
     // ✅ Safe function

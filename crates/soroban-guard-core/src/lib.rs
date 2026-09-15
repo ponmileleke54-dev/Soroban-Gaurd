@@ -11,8 +11,8 @@ pub use engine::LinterEngine;
 mod tests {
     use super::*;
     use crate::rules::{
-        BarePanicRule, HardcodedKeyRule, RequireAuthRule, TtlExtensionRule,
-        UnboundedLoopRule, UncheckedArithmeticRule, UnusedReturnRule,
+        BarePanicRule, HardcodedKeyRule, ReentrancyStateMutationRule, RequireAuthRule,
+        TtlExtensionRule, UnboundedLoopRule, UncheckedArithmeticRule, UnusedReturnRule,
     };
     use std::path::PathBuf;
 
@@ -26,6 +26,7 @@ mod tests {
         engine.register_rule(Box::new(HardcodedKeyRule));
         engine.register_rule(Box::new(UncheckedArithmeticRule));
         engine.register_rule(Box::new(UnusedReturnRule));
+        engine.register_rule(Box::new(ReentrancyStateMutationRule));
 
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let test_file = manifest_dir.join("../../tests/fixtures/test_contract.rs");
