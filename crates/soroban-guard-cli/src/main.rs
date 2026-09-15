@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, ValueEnum};
 use soroban_guard_core::{
     LinterEngine,
     rules::{
@@ -6,44 +6,50 @@ use soroban_guard_core::{
     },
     Severity,
 };
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum OutputFormat {
+    Text,
+    Json,
+}
 
 #[derive(Parser)]
 #[command(name = "soroban-guard")]
 #[command(about = "Static Analysis Security Linter for Soroban Smart Contracts")]
 struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-}
+    #[arg(value_name = "PATH")]
+    path: PathBuf,
 
-#[derive(Subcommand)]
-enum Commands {
-    Check {
-        #[arg(value_name = "PATH")]
-        path: PathBuf,
-    },
+    #[arg(short, long, value_enum, default_value_t = OutputFormat::Text)]
+    format: OutputFormat,
+
+    #[arg(short, long, value_name = "FILE")]
+    output: Option<PathBuf>,
 }
 
 fn main() {
     let cli = Cli::parse();
 
-    match cli.command {
-        Commands::Check { path } => {
-            println!("\x1b[1;36m🔍 Running soroban-guard security engine on {:?}...\x1b[0m\n", path);
+    let mut engine = LinterEngine::new();
+    engine.register_rule(Box::new(RequireAuthRule));
+    engine.register_rule(Box::new(TtlExtensionRule));
+    engine.register_rule(Box::new(UnboundedLoopRule));
+    engine.register_rule(Box::new(BarePanicRule));
+    engine.register_rule(Box::new(HardcodedKeyRule));
+    engine.register_rule(Box::new(UncheckedArithmeticRule));
 
-            let mut engine = LinterEngine::new();
-            engine.register_rule(Box::new(RequireAuthRule));
-            engine.register_rule(Box::new(TtlExtensionRule));
-            engine.register_rule(Box::new(UnboundedLoopRule));
-            engine.register_rule(Box::new(BarePanicRule));
-            engine.register_rule(Box::new(HardcodedKeyRule));
-            engine.register_rule(Box::new(UncheckedArithmeticRule));
-
-            match engine.analyze_file(&path) {
-                Ok(diagnostics) => {
+    match engine.analyze_file(&cli.path) {
+        Ok(diagnostics) => {
+            let output_str = match cli.format {
+                OutputFormat::Json => serde_json::to_string_pretty(&diagnostics)
+                    .unwrap_or_else(|_| "[]".to_string()),
+                OutputFormat::Text => {
+                    let mut buffer = String::new();
                     if diagnostics.is_empty() {
-                        println!("\x1b[1;32m✅ Analysis complete: Zero security vulnerabilities detected!\x1b[0m");
-                        return;
+                        return println!("\x1b[1;32m✅ Analysis complete: Zero security vulnerabilities detected!\x1b[0m");
                     }
 
                     let mut critical_count = 0;
@@ -66,25 +72,37 @@ fn main() {
                             }
                         };
 
-                        println!("{} \x1b[1mCode:\x1b[0m {}", severity_tag, diag.rule_code);
-                        println!("  \x1b[1mFile:\x1b[0m {}", diag.file_path);
-                        println!("  \x1b[1mMessage:\x1b[0m {}", diag.message);
+                        buffer.push_str(&format!("{} Code: {}\n", severity_tag, diag.rule_code));
+                        buffer.push_str(&format!("  File: {}\n", diag.file_path));
+                        buffer.push_str(&format!("  Message: {}\n", diag.message));
                         if let Some(ref suggestion) = diag.suggestion {
-                            println!("  \x1b[1;32m💡 Fix:\x1b[0m {}\n", suggestion);
+                            buffer.push_str(&format!("  💡 Fix: {}\n\n", suggestion));
                         }
                     }
 
-                    println!("\x1b[1;37m--------------------------------------------------\x1b[0m");
-                    println!(
-                        "\x1b[1mAnalysis Summary:\x1b[0m \x1b[31m{} Critical\x1b[0m | \x1b[33m{} Warnings\x1b[0m | \x1b[34m{} Info\x1b[0m",
+                    buffer.push_str("--------------------------------------------------\n");
+                    buffer.push_str(&format!(
+                        "Analysis Summary: {} Critical | {} Warnings | {} Info\n",
                         critical_count, warning_count, info_count
-                    );
+                    ));
+                    buffer
                 }
-                Err(err) => {
-                    eprintln!("\x1b[1;31m❌ Analysis error: {}\x1b[0m", err);
-                    std::process::exit(1);
+            };
+
+            if let Some(out_path) = cli.output {
+                if let Ok(mut file) = File::create(&out_path) {
+                    let _ = file.write_all(output_str.as_bytes());
+                    println!("Report written to {:?}", out_path);
+                } else {
+                    eprintln!("Failed to write report to {:?}", out_path);
                 }
+            } else {
+                println!("{}", output_str);
             }
+        }
+        Err(err) => {
+            eprintln!("\x1b[1;31m❌ Analysis error: {}\x1b[0m", err);
+            std::process::exit(1);
         }
     }
 }
