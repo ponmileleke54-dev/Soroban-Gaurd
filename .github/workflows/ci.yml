@@ -1,18 +1,60 @@
-name: CI
+name: CI & Security Audit
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  check-and-test:
+    name: Build & Test Workspace
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Build Workspace
-        run: cargo build --verbose
-      - name: Run Tests
-        run: cargo test --verbose
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check Code Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy Linter
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run Test Suite
+        run: cargo test --workspace --verbose
+
+  security-self-scan:
+    name: Run soroban-guard Self-Scan
+    runs-on: ubuntu-latest
+    needs: check-and-test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build soroban-guard CLI
+        run: cargo build --release -p soroban-guard-cli
+
+      - name: Analyze Fixtures with soroban-guard
+        run: ./target/release/soroban-guard tests/fixtures/test_contract.rs --format json --output audit-report.json
+
+      - name: Upload Audit Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: soroban-guard-audit-report
+          path: audit-report.json
