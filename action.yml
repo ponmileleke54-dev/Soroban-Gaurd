@@ -1,0 +1,44 @@
+name: 'soroban-guard'
+description: 'Static Security Analyzer for Soroban Smart Contracts'
+author: 'Soroban Guard Team'
+
+inputs:
+  path:
+    description: 'Path to the contract file or directory to analyze'
+    required: false
+    default: '.'
+  config:
+    description: 'Path to custom .soroban-guard.toml file'
+    required: false
+    default: '.soroban-guard.toml'
+  format:
+    description: 'Output format (text or json)'
+    required: false
+    default: 'text'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+
+    - name: Cache Cargo Dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Install soroban-guard CLI
+      shell: bash
+      run: |
+        echo "Building soroban-guard CLI..."
+        cargo build --release --manifest-path ${{ github.action_path }}/Cargo.toml -p soroban-guard-cli
+
+    - name: Run Analysis
+      shell: bash
+      run: |
+        CLI_BIN="${{ github.action_path }}/target/release/soroban-guard"
+        if [ -f "${{ inputs.config }}" ]; then
+          $CLI_BIN "${{ inputs.path }}" --config "${{ inputs.config }}" --format "${{ inputs.format }}"
+        else
+          $CLI_BIN "${{ inputs.path }}" --format "${{ inputs.format }}"
+        fi
