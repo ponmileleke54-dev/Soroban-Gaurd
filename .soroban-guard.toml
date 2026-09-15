@@ -1,0 +1,9 @@
+# soroban-guard security configuration
+[rules]
+SG001 = "critical"
+SG002 = "warning"
+SG003 = "warning"
+SG004 = "warning"
+SG005 = "critical"
+SG006 = "warning"
+SG007 = "warning"
