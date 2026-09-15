@@ -24,6 +24,11 @@ impl VulnerableVault {
         panic!("Emergency halt triggered!");
     }
 
+    // ⚠️ Triggers SG007 (Unused try_get return value)
+    pub fn check_status(env: Env) {
+        env.storage().instance().try_get::<Symbol, i128>(&Symbol::short("BAL"));
+    }
+
     // ✅ Safe function
     pub fn withdraw(env: Env, user: Symbol, amount: i128) {
         user.require_auth();
