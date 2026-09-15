@@ -5,26 +5,26 @@ pub struct VulnerableVault;
 
 #[contractimpl]
 impl VulnerableVault {
-    // 🚨 Triggers SG001 (Missing auth check) & SG002 (Missing TTL extension)
+    // 🚨 Triggers SG001 (Missing auth), SG002 (Missing TTL), & SG006 (Raw addition +)
     pub fn deposit(env: Env, amount: i128) {
-        let mut balance: i128 = env.storage().instance().get(&Symbol::short("BAL")).unwrap_or(0);
-        balance += amount;
-        env.storage().instance().set(&Symbol::short("BAL"), &balance);
+        let balance: i128 = env.storage().instance().get(&Symbol::short("BAL")).unwrap_or(0);
+        let new_balance = balance + amount;
+        env.storage().instance().set(&Symbol::short("BAL"), &new_balance);
     }
 
-    // ⚠️ Triggers SG003 (Unbounded loop over Vec without .len() check)
+    // ⚠️ Triggers SG003 (Unbounded loop)
     pub fn batch_process(env: Env, recipients: Vec<Symbol>) {
         for recipient in recipients.iter() {
-            // Process each recipient without validating recipients.len()
+            // Process recipient
         }
     }
 
-    // ⚠️ Triggers SG004 (Bare panic macro call)
+    // ⚠️ Triggers SG004 (Bare panic)
     pub fn emergency_halt(env: Env) {
         panic!("Emergency halt triggered!");
     }
 
-    // ✅ Safe function: Has require_auth and extend_ttl
+    // ✅ Safe function
     pub fn withdraw(env: Env, user: Symbol, amount: i128) {
         user.require_auth();
         env.storage().instance().extend_ttl(100, 100);

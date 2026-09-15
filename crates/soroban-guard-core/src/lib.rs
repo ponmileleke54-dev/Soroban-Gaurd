@@ -8,7 +8,9 @@ pub use engine::LinterEngine;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rules::{RequireAuthRule, TtlExtensionRule, UnboundedLoopRule, BarePanicRule, HardcodedKeyRule};
+    use crate::rules::{
+        RequireAuthRule, TtlExtensionRule, UnboundedLoopRule, BarePanicRule, HardcodedKeyRule, UncheckedArithmeticRule
+    };
     use std::path::PathBuf;
 
     #[test]
@@ -19,6 +21,7 @@ mod tests {
         engine.register_rule(Box::new(UnboundedLoopRule));
         engine.register_rule(Box::new(BarePanicRule));
         engine.register_rule(Box::new(HardcodedKeyRule));
+        engine.register_rule(Box::new(UncheckedArithmeticRule));
 
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let test_file = manifest_dir.join("../../tests/fixtures/test_contract.rs");
@@ -32,5 +35,6 @@ mod tests {
         assert!(rule_codes.contains(&"SG002".to_string()), "Missing SG002 diagnostic");
         assert!(rule_codes.contains(&"SG003".to_string()), "Missing SG003 diagnostic");
         assert!(rule_codes.contains(&"SG004".to_string()), "Missing SG004 diagnostic");
+        assert!(rule_codes.contains(&"SG006".to_string()), "Missing SG006 diagnostic");
     }
 }
