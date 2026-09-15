@@ -2,12 +2,14 @@ pub mod config;
 pub mod diagnostic;
 pub mod engine;
 pub mod rules;
+pub mod sarif;
 
 pub use config::{ConfigSeverity, GuardConfig};
 pub use diagnostic::{Diagnostic, Severity};
 pub use engine::LinterEngine;
-
+pub use sarif::SarifLog;
 #[cfg(test)]
+
 mod tests {
     use super::*;
     use crate::rules::{
