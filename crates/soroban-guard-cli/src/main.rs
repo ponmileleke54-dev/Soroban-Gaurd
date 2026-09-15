@@ -1,7 +1,9 @@
 use clap::{Parser, Subcommand};
 use soroban_guard_core::{
     LinterEngine,
-    rules::{RequireAuthRule, TtlExtensionRule, UnboundedLoopRule, BarePanicRule, HardcodedKeyRule},
+    rules::{
+        RequireAuthRule, TtlExtensionRule, UnboundedLoopRule, BarePanicRule, HardcodedKeyRule, UncheckedArithmeticRule
+    },
     Severity,
 };
 use std::path::PathBuf;
@@ -35,6 +37,7 @@ fn main() {
             engine.register_rule(Box::new(UnboundedLoopRule));
             engine.register_rule(Box::new(BarePanicRule));
             engine.register_rule(Box::new(HardcodedKeyRule));
+            engine.register_rule(Box::new(UncheckedArithmeticRule));
 
             match engine.analyze_file(&path) {
                 Ok(diagnostics) => {
