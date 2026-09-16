@@ -1,6 +1,6 @@
-use syn::{visit::Visit, BinOp, ExprBinary, File, ImplItemFn, Visibility};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
+use syn::{visit::Visit, BinOp, ExprBinary, File, ImplItemFn, Visibility};
 
 pub struct UncheckedArithmeticRule;
 

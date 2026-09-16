@@ -1,6 +1,6 @@
-use syn::{visit::Visit, File, ImplItemFn, Visibility};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
+use syn::{visit::Visit, File, ImplItemFn, Visibility};
 
 pub struct UnboundedLoopRule;
 
@@ -33,7 +33,8 @@ impl<'ast> Visit<'ast> for LoopVisitor {
         if matches!(node.vis, Visibility::Public(_)) {
             let fn_str = quote::quote!(#node).to_string();
 
-            let has_loop = fn_str.contains("for ") || fn_str.contains(".iter()") || fn_str.contains(".each(");
+            let has_loop =
+                fn_str.contains("for ") || fn_str.contains(".iter()") || fn_str.contains(".each(");
             let operates_on_collection = fn_str.contains("Vec") || fn_str.contains("Map");
             let checks_length = fn_str.contains("len()") || fn_str.contains("count()");
 

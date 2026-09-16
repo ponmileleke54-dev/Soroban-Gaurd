@@ -1,5 +1,5 @@
-use syn::File;
 use crate::diagnostic::Diagnostic;
+use syn::File;
 
 pub trait Rule: Send + Sync {
     fn code(&self) -> &'static str;

@@ -1,10 +1,10 @@
 use clap::{Parser, ValueEnum};
 use soroban_guard_core::{
-    GuardConfig, LinterEngine, SarifLog, Severity,
     rules::{
         BarePanicRule, HardcodedKeyRule, ReentrancyStateMutationRule, RequireAuthRule,
         TtlExtensionRule, UnboundedLoopRule, UncheckedArithmeticRule, UnusedReturnRule,
     },
+    GuardConfig, LinterEngine, SarifLog, Severity,
 };
 use std::fs::File;
 use std::io::Write;
@@ -38,7 +38,9 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
 
-    let config_path = cli.config.unwrap_or_else(|| PathBuf::from(".soroban-guard.toml"));
+    let config_path = cli
+        .config
+        .unwrap_or_else(|| PathBuf::from(".soroban-guard.toml"));
     let config = GuardConfig::load_from_path(&config_path);
 
     let mut engine = LinterEngine::with_config(config);
@@ -54,12 +56,12 @@ fn main() {
     match engine.analyze_file(&cli.path) {
         Ok(diagnostics) => {
             let output_str = match cli.format {
-                OutputFormat::Json => serde_json::to_string_pretty(&diagnostics)
-                    .unwrap_or_else(|_| "[]".to_string()),
+                OutputFormat::Json => {
+                    serde_json::to_string_pretty(&diagnostics).unwrap_or_else(|_| "[]".to_string())
+                }
                 OutputFormat::Sarif => {
                     let sarif_log = SarifLog::from_diagnostics(&diagnostics);
-                    serde_json::to_string_pretty(&sarif_log)
-                        .unwrap_or_else(|_| "{}".to_string())
+                    serde_json::to_string_pretty(&sarif_log).unwrap_or_else(|_| "{}".to_string())
                 }
                 OutputFormat::Github => {
                     let mut buffer = String::new();
@@ -71,7 +73,12 @@ fn main() {
                         };
                         buffer.push_str(&format!(
                             "::{} file={},line={},col={}::[{}] {}\n",
-                            level, diag.file_path, diag.line, diag.column, diag.rule_code, diag.message
+                            level,
+                            diag.file_path,
+                            diag.line,
+                            diag.column,
+                            diag.rule_code,
+                            diag.message
                         ));
                     }
                     buffer

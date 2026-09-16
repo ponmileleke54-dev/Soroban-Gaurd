@@ -1,10 +1,10 @@
 use crate::config::{ConfigSeverity, GuardConfig};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::Rule;
-use syn::File;
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
+use syn::File;
 
 pub struct LinterEngine {
     rules: Vec<Box<dyn Rule>>,
@@ -61,7 +61,8 @@ impl LinterEngine {
             let mut diagnostics = rule.check(&ast, &file_str);
 
             // Filter out inline suppressed rule occurrences
-            diagnostics.retain(|diag| !suppressed_rules.contains(&(diag.line, diag.rule_code.clone())));
+            diagnostics
+                .retain(|diag| !suppressed_rules.contains(&(diag.line, diag.rule_code.clone())));
 
             // Apply severity overrides from config
             if let Some(override_severity) = self.config.rules.get(rule_code) {

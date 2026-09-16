@@ -1,6 +1,6 @@
-use syn::{visit::Visit, File, ImplItemFn, Visibility, Macro};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
+use syn::{visit::Visit, File, ImplItemFn, Macro, Visibility};
 
 pub struct BarePanicRule;
 
@@ -53,7 +53,10 @@ impl<'ast> Visit<'ast> for PanicVisitor {
     fn visit_macro(&mut self, node: &'ast Macro) {
         if self.in_public_fn {
             let path_str = quote::quote!(#node).to_string();
-            if path_str.starts_with("panic") || path_str.starts_with("unreachable") || path_str.starts_with("todo") {
+            if path_str.starts_with("panic")
+                || path_str.starts_with("unreachable")
+                || path_str.starts_with("todo")
+            {
                 let fn_name = self.current_fn.as_deref().unwrap_or("unknown");
                 self.diagnostics.push(Diagnostic {
                     rule_code: "SG004".to_string(),

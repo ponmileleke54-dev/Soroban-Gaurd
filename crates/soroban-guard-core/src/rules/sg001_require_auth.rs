@@ -1,6 +1,6 @@
-use syn::{visit::Visit, File, ImplItemFn, Visibility};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
+use syn::{visit::Visit, File, ImplItemFn, Visibility};
 
 pub struct RequireAuthRule;
 
@@ -34,9 +34,9 @@ impl<'ast> Visit<'ast> for AuthVisitor {
             let fn_str = quote::quote!(#node).to_string();
 
             let has_require_auth = fn_str.contains("require_auth");
-            let mutates_state = fn_str.contains("storage") 
-                || fn_str.contains("instance") 
-                || fn_str.contains("persistent") 
+            let mutates_state = fn_str.contains("storage")
+                || fn_str.contains("instance")
+                || fn_str.contains("persistent")
                 || fn_str.contains("temporary");
 
             if mutates_state && !has_require_auth {

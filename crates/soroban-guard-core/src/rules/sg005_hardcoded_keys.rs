@@ -1,6 +1,6 @@
-use syn::{visit::Visit, File, LitStr};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
+use syn::{visit::Visit, File, LitStr};
 
 pub struct HardcodedKeyRule;
 
@@ -33,10 +33,21 @@ impl<'ast> Visit<'ast> for KeyVisitor {
         let value = node.value();
 
         // Detect Stellar Public Key (G...) or Secret Key (S...) consisting of 56 base32 characters
-        if (value.starts_with('G') || value.starts_with('S')) && value.len() == 56 && value.chars().all(|c| c.is_ascii_alphanumeric()) {
+        if (value.starts_with('G') || value.starts_with('S'))
+            && value.len() == 56
+            && value.chars().all(|c| c.is_ascii_alphanumeric())
+        {
             let is_secret = value.starts_with('S');
-            let severity = if is_secret { Severity::Critical } else { Severity::Warning };
-            let key_type = if is_secret { "secret seed key" } else { "public account address" };
+            let severity = if is_secret {
+                Severity::Critical
+            } else {
+                Severity::Warning
+            };
+            let key_type = if is_secret {
+                "secret seed key"
+            } else {
+                "public account address"
+            };
 
             self.diagnostics.push(Diagnostic {
                 rule_code: "SG005".to_string(),

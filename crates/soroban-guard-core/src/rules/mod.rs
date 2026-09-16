@@ -1,4 +1,3 @@
-pub mod trait_rule;
 pub mod sg001_require_auth;
 pub mod sg002_ttl_check;
 pub mod sg003_unbounded_loop;
@@ -7,8 +6,8 @@ pub mod sg005_hardcoded_keys;
 pub mod sg006_unchecked_math;
 pub mod sg007_unused_return;
 pub mod sg008_reentrancy;
+pub mod trait_rule;
 
-pub use trait_rule::Rule;
 pub use sg001_require_auth::RequireAuthRule;
 pub use sg002_ttl_check::TtlExtensionRule;
 pub use sg003_unbounded_loop::UnboundedLoopRule;
@@ -17,3 +16,4 @@ pub use sg005_hardcoded_keys::HardcodedKeyRule;
 pub use sg006_unchecked_math::UncheckedArithmeticRule;
 pub use sg007_unused_return::UnusedReturnRule;
 pub use sg008_reentrancy::ReentrancyStateMutationRule;
+pub use trait_rule::Rule;

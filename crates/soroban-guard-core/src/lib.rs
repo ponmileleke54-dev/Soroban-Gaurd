@@ -33,7 +33,9 @@ mod tests {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let test_file = manifest_dir.join("../../tests/fixtures/test_contract.rs");
 
-        let diagnostics = engine.analyze_file(&test_file).expect("Failed to analyze test file");
+        let diagnostics = engine
+            .analyze_file(&test_file)
+            .expect("Failed to analyze test file");
 
         assert!(!diagnostics.is_empty(), "Diagnostics should not be empty");
     }

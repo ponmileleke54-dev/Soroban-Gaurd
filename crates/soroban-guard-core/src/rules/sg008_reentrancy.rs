@@ -1,6 +1,6 @@
-use syn::{visit::Visit, Expr, File, ImplItemFn, Stmt, Visibility};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
+use syn::{visit::Visit, Expr, File, ImplItemFn, Stmt, Visibility};
 
 pub struct ReentrancyStateMutationRule;
 
@@ -60,12 +60,18 @@ impl<'ast> Visit<'ast> for ReentrancyVisitor {
             let stmt_str = quote::quote!(#node).to_string();
 
             // Detect external cross-contract invocations or client calls
-            if stmt_str.contains("invoke_contract") || stmt_str.contains("call_external") || stmt_str.contains("Client") {
+            if stmt_str.contains("invoke_contract")
+                || stmt_str.contains("call_external")
+                || stmt_str.contains("Client")
+            {
                 self.seen_external_call = true;
             }
 
             // Flag storage modifications occurring AFTER an external call was detected in the same function
-            if self.seen_external_call && (stmt_str.contains("storage().instance().set") || stmt_str.contains("storage().persistent().set")) {
+            if self.seen_external_call
+                && (stmt_str.contains("storage().instance().set")
+                    || stmt_str.contains("storage().persistent().set"))
+            {
                 let fn_name = self.current_fn.as_deref().unwrap_or("unknown");
                 self.diagnostics.push(Diagnostic {
                     rule_code: "SG008".to_string(),

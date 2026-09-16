@@ -1,14 +1,6 @@
-use syn::{
-    visit::Visit,
-    Expr,
-    ExprMethodCall,
-    File,
-    ImplItemFn,
-    ItemImpl,
-    Visibility,
-};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
+use syn::{visit::Visit, Expr, ExprMethodCall, File, ImplItemFn, ItemImpl, Visibility};
 
 pub struct TtlExtensionRule;
 
@@ -83,7 +75,8 @@ impl<'ast> Visit<'ast> for StorageExpressionVisitor {
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
         let method = node.method.to_string();
         if method == "persistent" || method == "instance" {
-            if matches!(node.receiver.as_ref(), Expr::MethodCall(receiver) if receiver.method == "storage") {
+            if matches!(node.receiver.as_ref(), Expr::MethodCall(receiver) if receiver.method == "storage")
+            {
                 self.uses_persistent_or_instance = true;
             }
         } else if method == "extend_ttl" {
