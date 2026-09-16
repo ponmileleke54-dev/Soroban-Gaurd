@@ -2,6 +2,7 @@ use crate::config::{ConfigSeverity, GuardConfig};
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::Rule;
 use syn::File;
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
@@ -43,18 +44,24 @@ impl LinterEngine {
         let ast: File = syn::parse_str(&content)
             .map_err(|e| format!("Failed to parse Rust AST for {:?}: {}", path_ref, e))?;
 
+        // Parse inline comment suppressions (e.g., // soroban-guard:disable-next-line SG001)
+        let suppressed_rules = parse_inline_suppressions(&content);
+
         let file_str = path_ref.to_string_lossy().to_string();
         let mut raw_diagnostics = Vec::new();
 
         for rule in &self.rules {
             let rule_code = rule.code();
 
-            // Check if rule is disabled in config
+            // Skip if rule is set to ignore in config
             if let Some(ConfigSeverity::Ignore) = self.config.rules.get(rule_code) {
                 continue;
             }
 
             let mut diagnostics = rule.check(&ast, &file_str);
+
+            // Filter out inline suppressed rule occurrences
+            diagnostics.retain(|diag| !suppressed_rules.contains(&(diag.line, diag.rule_code.clone())));
 
             // Apply severity overrides from config
             if let Some(override_severity) = self.config.rules.get(rule_code) {
@@ -73,4 +80,21 @@ impl LinterEngine {
 
         Ok(raw_diagnostics)
     }
+}
+
+fn parse_inline_suppressions(content: &str) -> HashSet<(usize, String)> {
+    let mut suppressions = HashSet::new();
+    let lines: Vec<&str> = content.lines().collect();
+
+    for (idx, line) in lines.iter().enumerate() {
+        if line.contains("soroban-guard:disable-next-line") {
+            if let Some(rule_code) = line.split("soroban-guard:disable-next-line").nth(1) {
+                let code = rule_code.trim().to_string();
+                // Suppress on next line (1-indexed)
+                suppressions.insert((idx + 2, code));
+            }
+        }
+    }
+
+    suppressions
 }
