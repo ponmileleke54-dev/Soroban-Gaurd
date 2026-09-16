@@ -46,4 +46,11 @@ impl VulnerableVault {
             env.storage().instance().set(&Symbol::short("BAL"), &balance);
         }
     }
+
+    // soroban-guard:disable-next-line SG001
+    pub fn deposit_with_suppression(env: Env, amount: i128) {
+        let balance: i128 = env.storage().instance().get(&Symbol::short("BAL")).unwrap_or(0);
+        let new_balance = balance + amount;
+        env.storage().instance().set(&Symbol::short("BAL"), &new_balance);
+    }
 }
