@@ -16,6 +16,8 @@ pub enum ConfigSeverity {
 pub struct GuardConfig {
     #[serde(default)]
     pub rules: HashMap<String, ConfigSeverity>,
+    #[serde(default)]
+    pub exclude: Vec<String>,
 }
 
 impl GuardConfig {
