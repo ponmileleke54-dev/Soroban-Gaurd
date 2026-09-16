@@ -9,7 +9,6 @@ pub use diagnostic::{Diagnostic, Severity};
 pub use engine::LinterEngine;
 pub use sarif::SarifLog;
 #[cfg(test)]
-
 mod tests {
     use super::*;
     use crate::rules::{

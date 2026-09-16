@@ -1,6 +1,6 @@
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::rules::trait_rule::Rule;
-use syn::{visit::Visit, Expr, File, ImplItemFn, Stmt, Visibility};
+use syn::{visit::Visit, File, ImplItemFn, Stmt, Visibility};
 
 pub struct ReentrancyStateMutationRule;
 
