@@ -1,33 +1,79 @@
-# Soroban Guard (`soroban-guard`)
+# Soroban Guard
 
-> **Automated Static Analysis & Security Linter for Soroban Smart Contracts on Stellar**
-
-[![Build Status](https://github.com/ponmileleke54-dev/Soroban-Gaurd/workflows/CI/badge.svg)](https://github.com/ponmileleke54-dev/Soroban-Gaurd/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-2021%20edition-orange.svg)](https://www.rust-lang.org/)
+**Soroban Guard** is a fast, specialized static analysis linter designed specifically for Soroban smart contracts on the Stellar network. Built in Rust, it parses Abstract Syntax Trees (AST) using `syn` and `quote` to detect security vulnerabilities, missing authorization checks, expired TTL storage entries, and gas exhaustion risks before contracts are compiled to WebAssembly or deployed to Mainnet.
 
 ---
 
-## Overview
+## Why Soroban Guard?
 
-**`soroban-guard`** is an open-source static analysis security linter tailored specifically for smart contracts built on the **Soroban** platform (Stellar's Rust-based WebAssembly smart contract engine). 
+Unlike traditional EVM smart contracts, Soroban smart contracts operate under a unique execution model managed by the Stellar network:
 
-In decentralized finance (DeFi) and automated protocol ecosystems, subtle smart contract vulnerabilities—such as missing authorization checks, unhandled state Time-To-Live (TTL) extensions, or unconstrained storage loops—can lead to severe exploits, state freezes, or unexpected execution failures. 
+1. **State Archival & TTL:** Storage entries in Soroban expire unless their Time-To-Live (TTL) is explicitly extended. Unextended entries risk archival, causing contract lockups.
+2. **Authorization Engine:** Soroban utilizes native `require_auth()` and `require_auth_for_args()` checks rather than global msg.sender patterns.
+3. **Resource Metering:** CPU and memory limits are strictly enforced on host function executions, making unbounded loops an immediate vector for transaction failure.
 
-`soroban-guard` acts as an automated security inspector. By directly parsing Rust source code into an Abstract Syntax Tree (AST) using `syn` and running deterministic static security visitors, `soroban-guard` detects vulnerability patterns during local development and inside CI/CD pipelines before code is ever compiled to WebAssembly (`.wasm`) or deployed on-chain.
-
----
-
-## Key Features
-
-- **Blazing Fast Parsing:** Evaluates contract code in under 100 milliseconds using direct AST traversal (`syn`/`quote`).
-- **Soroban-Specific Lints:** Purpose-built rules detecting anti-patterns unique to the Soroban SDK and state architecture.
-- **Actionable Diagnostics:** Precise error locations with severity rankings (*Critical*, *Warning*, *Info*) and actionable remediation suggestions.
-- **Extensible Architecture:** Decoupled, trait-based rule runner enabling open-source contributors to independently build and register custom lint rules.
-- **CI/CD Integration Ready:** Easily integrates into GitHub Actions, pre-commit hooks, and developer workflows.
+`soroban-guard` acts as an automated security companion in local development and CI/CD pipelines, flagging non-compliant patterns during the coding phase rather than post-deployment.
 
 ---
 
-## Project Workspace Architecture
+## Architecture Overview
 
-`soroban-guard` is structured as a modular Cargo workspace divided into core library logic and a command-line interface (CLI):
+`soroban-guard` is structured as a decoupled, modular Rust workspace:
+soroban-guard/
+├── crates/
+│   ├── soroban-guard-core/  # Core analysis engine, AST visitors, & SARIF formatters
+│   └── soroban-guard-cli/   # Command-line interface, argument parsing, & output renderers
+├── .github/
+│   └── workflows/ci.yml     # Workspace test runner and self-audit workflow
+├── action.yml               # Composite GitHub Action for PR integration
+├── RULES.md                 # Detailed security rule catalog with remediation examples
+└── Cargo.toml               # Workspace manifest
+
+### Core Components
+
+* **`soroban-guard-core`**:
+  * **Rule Trait (`rules::trait_rule::Rule`)**: Defines a unified interface for code analyzers (`code()`, `name()`, `check()`).
+  * **AST Visitors (`syn::visit::Visit`)**: Recursively inspects functions, statements, function calls, macro invocations, and binary expressions across input target files.
+  * **Engine (`LinterEngine`)**: Coordinates AST parsing, handles comment suppression filtering, applies configuration overrides, and generates structured `Diagnostic` objects.
+  * **SARIF Engine (`sarif::SarifLog`)**: Formats analysis diagnostics into standard SARIF v2.1.0 JSON payloads.
+
+* **`soroban-guard-cli`**:
+  * Provides a lightweight command-line utility built with `clap` for parsing flags (`--format`, `--output`, `--config`).
+  * Converts diagnostics into ANSI terminal text, JSON, GitHub workflow logging commands, or SARIF logs.
+
+---
+
+## Enforced Security Rules
+
+`soroban-guard` enforces 8 security rules targeting common Soroban development pitfalls:
+
+| Rule Code | Name | Severity | Description |
+| :--- | :--- | :--- | :--- |
+| **`SG001`** | Missing Authorization Check | **Critical** | Public `#[contractimpl]` functions modifying storage or transferring assets without calling `.require_auth()`. |
+| **`SG002`** | Missing Storage TTL Extension | **Warning** | Storage mutations or reads missing corresponding `.extend_ttl()` calls, risking state expiration. |
+| **`SG003`** | Unbounded Loop Iteration | **Warning** | Iterating over dynamic collections (`Vec`, `Map`) without enforcing maximum length checks. |
+| **`SG004`** | Bare Panic Macro Usage | **Warning** | Calling generic `panic!()`, `todo!()`, or `unreachable!()` macros instead of `panic_with_error!`. |
+| **`SG005`** | Hardcoded Addresses / Keys | **Critical** | Embedding static Stellar address strings (`G...`) or secret key prefixes (`S...`) into code. |
+| **`SG006`** | Unchecked Arithmetic | **Warning** | Performing raw mathematical operations (`+`, `-`, `*`) without using checked arithmetic (`checked_add`). |
+| **`SG007`** | Unused Storage Return Handle | **Warning** | Ignoring returned `Result` or `Option` values from storage reads (`try_get`). |
+| **`SG008`** | Reentrancy State Mutation | **Critical** | Modifying contract storage (`storage().set()`) *after* triggering external cross-contract invocations. |
+
+For deep-dive examples and remediation code samples for every rule, consult [RULES.md](RULES.md).
+
+---
+
+## Installation
+
+### Prerequisites
+
+* **Rust Toolchain:** Stable Rust installed via [rustup](https://rustup.rs/).
+* **Cargo Package Manager**
+
+### Building from Source
+
+Clone the repository and build the CLI binary in release mode:
+
+```bash
+git clone [https://github.com/gamp/Soroban-Gaurd.git](https://github.com/gamp/Soroban-Gaurd.git)
+cd Soroban-Gaurd
+cargo build --release -p soroban-guard-cli
