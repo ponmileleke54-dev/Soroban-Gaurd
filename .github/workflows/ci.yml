@@ -51,7 +51,7 @@ jobs:
         run: cargo build --release -p soroban-guard-cli
 
       - name: Analyze Fixtures with soroban-guard
-        run: ./target/release/soroban-guard tests/fixtures/test_contract.rs --format json --output audit-report.json
+        run: ./target/release/soroban-guard-cli tests/fixtures/test_contract.rs --format json --output audit-report.json
 
       - name: Upload Audit Artifact
         uses: actions/upload-artifact@v4
