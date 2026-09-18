@@ -34,3 +34,17 @@ pub fn deposit(env: Env, user: Address, amount: i128) {
 * **Target:** Public functions modifying contract storage after invoking external contracts.
 * **Description:** Executing state mutations (`set(...)`) after calling external contracts (`invoke_contract`) leaves the contract vulnerable to reentrancy attacks or inconsistent state transitions.
 * **Remediation:** Follow the Checks-Effects-Interactions pattern: update storage states *before* making cross-contract calls.
+
+### `SG009`: Unused Storage Key Definition
+
+* **Severity:** Warning
+* **Category:** Code Quality / Ledger Hygiene
+
+#### Vulnerable Pattern
+```rust
+#[contracttype]
+pub enum DataKey {
+    Admin,
+    Counter,
+    LegacyConfig, // Defined but never read or updated
+}
